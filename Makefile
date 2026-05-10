@@ -9,7 +9,7 @@ TLS_CODE = ${TLS_DIR:=/*.go}
 
 ADMIN_DIR = cmd/admin
 ADMIN_NAME = osctrl-admin
-ADMIN_CODE = ${ADMIN_DIR:=/*.go}
+ADMIN_CODE = ./$(ADMIN_DIR)
 
 API_DIR = cmd/api
 API_NAME = osctrl-api
@@ -27,7 +27,7 @@ DIST = dist
 STATIC_ARGS = -ldflags "-linkmode external -extldflags -static"
 BUILD_ARGS = -ldflags "-s -w -X main.buildCommit=$(shell git rev-parse HEAD) -X main.buildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-.PHONY: build static clean tls admin cli api release release-build release-check release-init clean-dist
+.PHONY: build static clean tls admin cli api release release-build release-check release-init clean-dist web-install web-build web-dev dev-admin
 
 # Build code according to caller OS and architecture
 build:
@@ -52,11 +52,11 @@ tls-static:
 	go build $(BUILD_ARGS) $(STATIC_ARGS) -o $(OUTPUT)/$(TLS_NAME) -a $(TLS_CODE)
 
 # Build Admin UI
-admin:
+admin: web-build
 	go build $(BUILD_ARGS) -o $(OUTPUT)/$(ADMIN_NAME) $(ADMIN_CODE)
 
 # Build Admin UI statically
-admin-static:
+admin-static: web-build
 	go build $(BUILD_ARGS) $(STATIC_ARGS) -o $(OUTPUT)/$(ADMIN_NAME) -a $(ADMIN_CODE)
 
 # Build API
@@ -310,3 +310,21 @@ release-test:
 			$$binary --version || $$binary version || echo "No version flag available"; \
 		fi; \
 	done
+
+# ===== SvelteKit web UI for osctrl-admin =====
+
+WEB_DIR = cmd/admin/web
+
+web-install:
+	cd $(WEB_DIR) && npm ci
+
+web-build: web-install
+	cd $(WEB_DIR) && npm run build
+
+web-dev:
+	cd $(WEB_DIR) && npm run dev
+
+# Run osctrl-admin without forcing a SvelteKit build (use with `make web-dev`
+# in another shell). Pair the two for a fast HMR loop.
+dev-admin:
+	go run -tags dev_no_embed ./cmd/admin
