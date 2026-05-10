@@ -1,7 +1,9 @@
 {
   "name": "web",
-  "version": "1.0.0",
+  "version": "0.0.0",
+  "private": true,
   "type": "module",
+  "description": "osctrl admin SvelteKit SPA",
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -15,9 +17,7 @@
     "node": ">=20.0.0"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "osctrl admin SvelteKit SPA",
+  "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@sveltejs/adapter-static": "^3.0.10",
