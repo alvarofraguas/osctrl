@@ -26,6 +26,21 @@ describe('apiJSON', () => {
     expect(window.location.href).toContain('/login?next=');
   });
 
+  it('throws AuthError on opaque-redirect (redirect:manual surfacing a 302) and redirects to /login', async () => {
+    // Response does not normally allow status 0; use a stub that satisfies
+    // the parts of Response our code inspects.
+    const opaqueResponse = {
+      type: 'opaqueredirect',
+      status: 0,
+      ok: false,
+      text: async () => '',
+      json: async () => ({}),
+    } as unknown as Response;
+    vi.stubGlobal('fetch', vi.fn(async () => opaqueResponse));
+    await expect(apiJSON({ path: '/foo', method: 'GET' })).rejects.toBeInstanceOf(AuthError);
+    expect(window.location.href).toContain('/login?next=');
+  });
+
   it('throws ApiError with status on 500', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('boom', { status: 500 })));
     const err = await apiJSON({ path: '/foo', method: 'GET' }).catch(e => e);

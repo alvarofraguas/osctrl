@@ -17,7 +17,7 @@ describe('searchNodes adapter', () => {
         data: [
           { uuid: 'a', username: 'u1', localname: 'host1', ip: '1.1.1.1',
             platform: 'linux', version: '1.0', osquery: '5.x',
-            lastseen: { display: '1m ago', timestamp: 1 }, firstseen: { display: '1d', timestamp: 0 },
+            lastseen: { display: '1m ago', timestamp: '1' }, firstseen: { display: '1d', timestamp: '0' },
             checkbox: '' }
         ]
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -57,6 +57,9 @@ describe('searchNodes adapter', () => {
     expect(url).toContain('length=25');
     expect(url).toContain('search=web');
     expect(url).toContain('order%5B0%5D%5Bdir%5D=desc');
+    // Verify column name is translated to numeric index (Go's mapDTColumnToDB
+    // switches on '1'..'9', not column names — this is what would have caught the bug)
+    expect(url).toContain('order%5B0%5D%5Bcolumn%5D=1');
   });
 
   it('throws AuthError on 401', async () => {

@@ -15,11 +15,15 @@ export async function apiFetch(opts: FetchOptions): Promise<Response> {
   const { path, ...init } = opts;
   const res = await fetch(path, {
     ...init,
+    redirect: 'manual',
     credentials: 'include',
     headers: { Accept: 'application/json', ...(init.headers || {}) }
   });
 
-  if (res.status === 401 || res.status === 302) {
+  // `redirect: 'manual'` causes opaque-redirect responses to surface as
+  // status === 0 with type === 'opaqueredirect'. Treat both that and an
+  // explicit 401 as "not authenticated".
+  if (res.type === 'opaqueredirect' || res.status === 0 || res.status === 401) {
     // Redirect to legacy login, preserving where we were headed.
     if (typeof window !== 'undefined') {
       const next = encodeURIComponent(window.location.pathname + window.location.search);

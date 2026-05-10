@@ -1,11 +1,31 @@
 import { apiJSON } from './client';
 import type { DataTablesPayload, NodeJSON, NodesPage, NodeTarget } from './types';
 
+/**
+ * Maps human-readable column names to the DataTables-style numeric index
+ * the osctrl backend expects in `order[0][column]`.
+ *
+ * Keep in sync with mapDTColumnToDB in cmd/admin/handlers/json-nodes.go.
+ */
+export const NODE_SORT_COLUMNS = {
+  uuid: '1',
+  username: '2',
+  localname: '3',
+  ip: '4',
+  platform: '5',
+  version: '6',
+  osquery: '7',
+  lastseen: '8',
+  firstseen: '9',
+} as const;
+
+export type NodeSortColumn = keyof typeof NODE_SORT_COLUMNS;
+
 export interface SearchNodesParams {
   page: number;            // 0-indexed
   pageSize: number;
   search: string;
-  sortColumn?: string;     // column name as expected by mapDTColumnToDB on the Go side
+  sortColumn?: NodeSortColumn;
   sortDir?: 'asc' | 'desc';
 }
 
@@ -27,7 +47,7 @@ export async function searchNodes(
   qs.set('length', String(params.pageSize));
   qs.set('search', params.search);
   if (params.sortColumn !== undefined) {
-    qs.set('order[0][column]', params.sortColumn);
+    qs.set('order[0][column]', NODE_SORT_COLUMNS[params.sortColumn]);
     qs.set('order[0][dir]', params.sortDir ?? 'asc');
   }
   const path = `/paginated-json/environment/${encodeURIComponent(env)}/${encodeURIComponent(target)}?${qs.toString()}`;

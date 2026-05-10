@@ -4,7 +4,9 @@
 
 export interface CreationTimes {
   display: string;
-  timestamp: number;
+  // Unix epoch seconds, serialised as a string by Go's TimeTimestamp helper
+  // (see pkg/utils/time-utils.go). Parse with parseInt() at use sites.
+  timestamp: string;
 }
 
 export interface NodeJSON {
