@@ -419,14 +419,20 @@ func osctrlAdminService() {
 			flagParams.Service.Auth,
 		),
 	)
-	// Admin: bootstrap JSON for the SPA shell (registered before /ui/ so the specific route takes precedence)
+	// Admin: bootstrap JSON for the SPA shell.
+	// The exact pattern GET /ui/api/bootstrap is more specific than the subtree
+	// GET /ui/ so ServeMux always routes it here, regardless of registration order.
 	adminMux.Handle(
 		"GET /ui/api/bootstrap",
 		handlerAuthCheck(http.HandlerFunc(handlersAdmin.JSONBootstrapHandler), flagParams.Service.Auth))
 	// Admin: modern SvelteKit UI (embedded; or 404 in dev_no_embed mode)
 	uiHandler := newWebHandler()
-	adminMux.Handle("GET /ui/", handlerAuthCheck(uiHandler, flagParams.Service.Auth))
-	adminMux.Handle("GET /ui", handlerAuthCheck(uiHandler, flagParams.Service.Auth))
+	adminMux.Handle(
+		"GET /ui/",
+		handlerAuthCheck(uiHandler, flagParams.Service.Auth))
+	adminMux.Handle(
+		"GET /ui",
+		handlerAuthCheck(uiHandler, flagParams.Service.Auth))
 	// Admin: paginated JSON data for environments
 	adminMux.Handle(
 		"GET /paginated-json/environment/{env}/{target}",

@@ -38,3 +38,13 @@ func TestUIRoute_DeepLinkFallback(t *testing.T) {
 			string(body[:min(200, len(body))]))
 	}
 }
+
+func TestUIRoute_NoCacheHeaderOnIndex(t *testing.T) {
+	h := newWebHandler()
+	req := httptest.NewRequest(http.MethodGet, "/ui/", nil)
+	rr := httptest.NewRecorder()
+	h.ServeHTTP(rr, req)
+	if got := rr.Header().Get("Cache-Control"); got != "no-cache" {
+		t.Errorf("Cache-Control: got %q, want %q", got, "no-cache")
+	}
+}

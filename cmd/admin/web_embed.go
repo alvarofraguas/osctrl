@@ -4,6 +4,7 @@ package main
 
 import (
 	"embed"
+	"errors"
 	"io/fs"
 	"net/http"
 	"strings"
@@ -42,7 +43,7 @@ func newWebHandler() http.Handler {
 		// We probe the FS first.
 		probe := strings.TrimPrefix(stripped, "/")
 		if probe != "" && probe != "index.html" {
-			if _, err := sub.Open(probe); err != nil {
+			if _, err := fs.Stat(sub, probe); errors.Is(err, fs.ErrNotExist) {
 				stripped = "/"
 			}
 		}
