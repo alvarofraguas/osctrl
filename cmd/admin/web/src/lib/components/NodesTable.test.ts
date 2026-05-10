@@ -1,4 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+vi.mock('$app/navigation', () => ({
+  goto: vi.fn(async () => {})
+}));
+
 import { render, screen, waitFor, fireEvent } from '@testing-library/svelte';
 import Wrapper from './NodesTable.test-wrapper.svelte';
 import type { NodeTarget } from '$lib/api/types';
