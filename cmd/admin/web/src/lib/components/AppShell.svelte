@@ -11,6 +11,8 @@
     staleTime: 60_000
   });
 
+  const selectedEnv = $derived(getSelectedEnv());
+
   $effect(() => {
     const data = $bootstrap.data;
     if (data && getSelectedEnv() === null && data.envs.length > 0) {
@@ -30,7 +32,7 @@
     {#if $bootstrap.data}
       <select
         class="border border-gray-300 rounded px-2 py-1 text-sm"
-        value={getSelectedEnv() ?? ''}
+        value={selectedEnv ?? ''}
         onchange={handleEnvChange}
         aria-label="Environment"
       >
@@ -48,6 +50,19 @@
   </div>
 </header>
 
-<main class="p-6">
-  {@render children()}
-</main>
+{#if $bootstrap.isError}
+  <main class="p-6">
+    <div class="text-sm text-red-600">
+      Failed to load application data.
+      <a href="/" class="ml-2 underline">Reload</a>
+    </div>
+  </main>
+{:else if $bootstrap.isSuccess}
+  <main class="p-6">
+    {@render children()}
+  </main>
+{:else}
+  <main class="p-6">
+    <p class="text-sm text-gray-500">Loading…</p>
+  </main>
+{/if}
