@@ -85,3 +85,13 @@ tools/bruno/collection.bru
 !CHANGELOG.md
 !SECURITY.md
 !docs/**/*.md
+
+# osctrl-admin SvelteKit build artifacts
+# Re-include the build dir (overrides the global "build" rule above),
+# then ignore its contents except the two placeholder files.
+!cmd/admin/web/build/
+cmd/admin/web/build/*
+!cmd/admin/web/build/.gitkeep
+!cmd/admin/web/build/index.html
+cmd/admin/web/node_modules/
+cmd/admin/web/.svelte-kit/
