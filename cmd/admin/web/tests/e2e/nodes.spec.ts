@@ -60,7 +60,8 @@ test('nodes page renders rows, debounces search, and refetches', async ({ page }
   await page.getByPlaceholder(/search/i).fill('host-a');
 
   // Wait long enough for the debounce + refetch to complete.
-  await page.waitForTimeout(500);
+  // 250ms debounce + buffer for network and render on loaded CI runners.
+  await page.waitForTimeout(750);
 
   // Verify a refetch happened and the table updated.
   expect(searchCalls).toBeGreaterThan(callsBeforeSearch);
