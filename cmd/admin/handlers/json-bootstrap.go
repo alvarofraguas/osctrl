@@ -1,11 +1,9 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/jmpsec/osctrl/cmd/admin/sessions"
-	"github.com/jmpsec/osctrl/pkg/users"
 	"github.com/jmpsec/osctrl/pkg/utils"
 	"github.com/rs/zerolog/log"
 )
@@ -33,18 +31,14 @@ func (h *HandlersAdmin) JSONBootstrapHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	// Filter to environments the user has access to
-	envs := []string{}
-	for _, env := range allEnvs {
-		if h.Users.CheckPermissions(username, users.UserLevel, env.UUID) {
-			envs = append(envs, env.Name)
-		}
+	allowed := h.allowedEnvironments(username, allEnvs)
+	envNames := make([]string, 0, len(allowed))
+	for _, env := range allowed {
+		envNames = append(envNames, env.Name)
 	}
 	// Encode and send response
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(BootstrapResponse{
+	utils.HTTPResponse(w, utils.JSONApplicationUTF8, http.StatusOK, BootstrapResponse{
 		User: username,
-		Envs: envs,
-	}); err != nil {
-		log.Err(err).Msg("error encoding bootstrap response")
-	}
+		Envs: envNames,
+	})
 }

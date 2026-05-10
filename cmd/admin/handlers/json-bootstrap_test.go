@@ -19,7 +19,7 @@ import (
 
 func setupBootstrapTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared&mode=memory"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, err, "failed to open in-memory SQLite database")
 	return db
 }
@@ -76,7 +76,7 @@ func TestJSONBootstrapHandler(t *testing.T) {
 	h.JSONBootstrapHandler(rr, req)
 
 	assert.Equal(t, http.StatusOK, rr.Code)
-	assert.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+	assert.Equal(t, "application/json; charset=UTF-8", rr.Header().Get("Content-Type"))
 
 	var resp BootstrapResponse
 	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
