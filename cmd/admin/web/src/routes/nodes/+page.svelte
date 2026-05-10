@@ -3,6 +3,7 @@
   import { getSelectedEnv } from '$lib/stores/env.svelte';
   import { page } from '$app/stores';
   import type { NodeTarget } from '$lib/api/types';
+  import { NODE_SORT_COLUMNS, type NodeSortColumn } from '$lib/api/nodes';
 
   const TARGETS: NodeTarget[] = ['all', 'active', 'inactive'];
 
@@ -11,12 +12,20 @@
     const raw = $page.url.searchParams.get('target') ?? 'all';
     return TARGETS.includes(raw as NodeTarget) ? (raw as NodeTarget) : 'all';
   });
+  const initialSortColumn = $derived.by((): NodeSortColumn | undefined => {
+    const raw = $page.url.searchParams.get('sort') ?? '';
+    return raw in NODE_SORT_COLUMNS ? (raw as NodeSortColumn) : undefined;
+  });
+  const initialSortDir = $derived.by((): 'asc' | 'desc' => {
+    const raw = $page.url.searchParams.get('dir') ?? '';
+    return raw === 'desc' ? 'desc' : 'asc';
+  });
 </script>
 
 <div class="space-y-4">
   <h1 class="text-2xl font-semibold">Nodes</h1>
   {#if env}
-    <NodesTable {env} {target} />
+    <NodesTable {env} {target} {initialSortColumn} {initialSortDir} />
   {:else}
     <p class="text-sm text-gray-500">Select an environment to see nodes.</p>
   {/if}

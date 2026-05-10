@@ -6,14 +6,15 @@
   import NodeStatusBadge from './NodeStatusBadge.svelte';
   import { goto } from '$app/navigation';
 
-  let { env, target = 'all' as NodeTarget }: { env: string; target?: NodeTarget } = $props();
+  let { env, target = 'all' as NodeTarget, initialSortColumn, initialSortDir = 'asc' }:
+    { env: string; target?: NodeTarget; initialSortColumn?: NodeSortColumn; initialSortDir?: 'asc' | 'desc' } = $props();
 
   let pageIndex = $state(0);
   const pageSize = 50;
   let searchInput = $state('');
   let debouncedSearch = $state('');
-  let sortColumn = $state<NodeSortColumn | undefined>(undefined);
-  let sortDir = $state<'asc' | 'desc'>('asc');
+  let sortColumn = $state<NodeSortColumn | undefined>(initialSortColumn);
+  let sortDir = $state<'asc' | 'desc'>(initialSortDir);
 
   const COLUMNS = [
     { key: 'uuid' as const, label: 'UUID' },
@@ -69,6 +70,7 @@
       sortColumn = col;
       sortDir = 'asc';
     }
+    pageIndex = 0;
     // Reflect in URL so it's bookmarkable / back-button-friendly.
     const url = new URL(window.location.href);
     url.searchParams.set('sort', col);
@@ -101,16 +103,21 @@
         <tr>
           {#each COLUMNS as { key, label }}
             <th
-              class="text-left px-3 py-2 font-medium border-b cursor-pointer select-none"
-              onclick={() => toggleSort(key)}
+              scope="col"
+              class="text-left px-3 py-2 font-medium border-b"
+              aria-sort={sortColumn === key ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
             >
-              {label}
-              {#if sortColumn === key}
-                <span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>
-              {/if}
+              <button
+                type="button"
+                class="flex items-center gap-1 select-none w-full text-left"
+                onclick={() => toggleSort(key)}
+              >
+                {label}
+                {#if sortColumn === key}<span aria-hidden="true">{sortDir === 'asc' ? '▲' : '▼'}</span>{/if}
+              </button>
             </th>
           {/each}
-          <th class="text-left px-3 py-2 font-medium border-b">Status</th>
+          <th scope="col" class="text-left px-3 py-2 font-medium border-b">Status</th>
         </tr>
       </thead>
       <tbody>
