@@ -92,20 +92,10 @@ export function CarveRunPage() {
 
   const pathValidation = validatePath(path);
 
-  const hasTargets =
-    target.uuids.length > 0 ||
-    target.platforms.length > 0 ||
-    target.hosts.length > 0 ||
-    target.tags.length > 0;
-
   async function handleSubmit() {
     const trimmedPath = path.trim();
     if (!trimmedPath) {
       setSubmitError('File path is required.');
-      return;
-    }
-    if (!hasTargets) {
-      setSubmitError('No targets have been specified.');
       return;
     }
     setIsSubmitting(true);
@@ -361,7 +351,7 @@ export function CarveRunPage() {
 
       <StickyFooter
         submitting={isSubmitting}
-        disabled={isSubmitting || pathValidation.kind === 'err' || !hasTargets}
+        disabled={isSubmitting || pathValidation.kind === 'err'}
         message={submitError ? { tone: 'error', text: submitError } : null}
         onSubmit={() => void handleSubmit()}
         onCancel={() => void navigate({ to: '/_app/env/$env/carves', params: { env } })}

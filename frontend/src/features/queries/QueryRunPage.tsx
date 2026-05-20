@@ -72,19 +72,9 @@ export function QueryRunPage() {
     }
   }
 
-  const hasTargets =
-    target.uuids.length > 0 ||
-    target.platforms.length > 0 ||
-    target.hosts.length > 0 ||
-    target.tags.length > 0;
-
   async function handleSubmit() {
     if (!sql.trim()) {
       setSubmitError('Query SQL cannot be empty.');
-      return;
-    }
-    if (!hasTargets) {
-      setSubmitError('No targets have been specified.');
       return;
     }
     setIsSubmitting(true);
@@ -229,7 +219,7 @@ export function QueryRunPage() {
       {/* ── Sticky footer ────────────────────────────────────────────── */}
       <StickyFooter
         submitting={isSubmitting}
-        disabled={isSubmitting || !hasTargets}
+        disabled={isSubmitting}
         message={footerMessage}
         onSubmit={() => void handleSubmit()}
         onCancel={() => void navigate({ to: '/_app/env/$env/queries', params: { env } })}
