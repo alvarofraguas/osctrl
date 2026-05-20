@@ -789,6 +789,11 @@ func (h *HandlersTLS) CarveBlockHandler(w http.ResponseWriter, r *http.Request) 
 	blockCarve := false
 	// Check if provided session_id matches with the request_id (carve query name)
 	if carve, err := h.Carves.GetCheckCarve(t.SessionID, t.RequestID); err == nil {
+		if carve.EnvironmentID != env.ID {
+			log.Warn().Msgf("carve session %s does not belong to environment %s", t.SessionID, env.Name)
+			utils.HTTPResponse(w, utils.JSONApplicationUTF8, http.StatusOK, types.CarveBlockResponse{Success: false})
+			return
+		}
 		// Record ingested data
 		requestSize.WithLabelValues(string(env.UUID), "CarveBlock").Observe(float64(len(body)))
 		log.Info().Msgf("node %d in %s environment ingested %d bytes for CarveBlockHandler endpoint", carve.NodeID, env.Name, len(body))

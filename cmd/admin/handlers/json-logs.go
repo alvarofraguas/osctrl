@@ -208,7 +208,7 @@ func (h *HandlersAdmin) JSONQueryLogsHandler(w http.ResponseWriter, r *http.Requ
 	var downloadUrl string
 	// Get logs
 	if h.DBLogger != nil {
-		queryLogs, err := h.DBLogger.QueryLogs(name)
+		queryLogs, err := h.DBLogger.QueryLogs(name, env.Name)
 		if err != nil {
 			log.Err(err).Msg("error getting logs")
 			return
@@ -294,7 +294,7 @@ func (h *HandlersAdmin) JSONDownloadQueryLogsHandler(w http.ResponseWriter, r *h
 	queryLogJSON := []QueryLogJSON{}
 	// Get logs
 	if h.DBLogger != nil {
-		queryLogs, err := h.DBLogger.QueryLogs(name)
+		queryLogs, err := h.DBLogger.QueryLogs(name, env.Name)
 		if err != nil {
 			log.Err(err).Msg("error getting logs")
 			return

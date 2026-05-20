@@ -171,10 +171,10 @@ func (logDB *LoggerDB) Query(data []byte, environment, uuid, name string, status
 	}
 }
 
-// QueryLogs will retrieve all query logs
-func (logDB *LoggerDB) QueryLogs(name string) ([]OsqueryQueryData, error) {
+// QueryLogs will retrieve all query logs for a given environment
+func (logDB *LoggerDB) QueryLogs(name, environment string) ([]OsqueryQueryData, error) {
 	var logs []OsqueryQueryData
-	if err := logDB.Database.Conn.Where("name = ?", name).Find(&logs).Error; err != nil {
+	if err := logDB.Database.Conn.Where("name = ? AND environment = ?", name, environment).Find(&logs).Error; err != nil {
 		return logs, err
 	}
 	return logs, nil

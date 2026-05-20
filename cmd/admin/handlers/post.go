@@ -797,6 +797,23 @@ func (h *HandlersAdmin) NodeActionsPOSTHandler(w http.ResponseWriter, r *http.Re
 		okCount := 0
 		errCount := 0
 		for _, u := range m.UUIDs {
+			node, err := h.Nodes.GetByUUID(u)
+			if err != nil {
+				errCount++
+				log.Err(err).Msgf("error finding node %s", u)
+				continue
+			}
+			nodeEnv, err := h.Envs.GetByID(node.EnvironmentID)
+			if err != nil {
+				errCount++
+				log.Err(err).Msgf("error getting environment for node %s", u)
+				continue
+			}
+			if !h.Users.CheckPermissions(ctx[sessions.CtxUser], users.AdminLevel, nodeEnv.UUID) {
+				errCount++
+				log.Warn().Msgf("user %s lacks permission to delete node %s in env %s", ctx[sessions.CtxUser], u, nodeEnv.Name)
+				continue
+			}
 			if err := h.Nodes.ArchiveDeleteByUUID(u); err != nil {
 				errCount++
 				log.Err(err).Msgf("error deleting node %s", u)
