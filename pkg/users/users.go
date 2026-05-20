@@ -51,6 +51,13 @@ type AdminUser struct {
 	// (an OIDC user with a password set later can log in either
 	// way, by design).
 	AuthSource string
+	// IdPSubject is the stable, opaque identifier from the
+	// federated IdP (OIDC "sub" claim or SAML NameID). It is
+	// bound on first federated login and checked on subsequent
+	// logins to prevent a different IdP identity with the same
+	// username from hijacking the account. Empty means "not yet
+	// bound" (local users, or pre-upgrade federated users).
+	IdPSubject string
 }
 
 // TokenClaims to hold user claims when using JWT
@@ -302,6 +309,14 @@ func (m *UserManager) GetWithServiceByEnvID(username string, service bool, envID
 func (m *UserManager) Create(user AdminUser) error {
 	if err := m.DB.Create(&user).Error; err != nil {
 		return fmt.Errorf("Create AdminUser %w", err)
+	}
+	return nil
+}
+
+// Update persists changes to an existing AdminUser row.
+func (m *UserManager) Update(user AdminUser) error {
+	if err := m.DB.Save(&user).Error; err != nil {
+		return fmt.Errorf("Update AdminUser %w", err)
 	}
 	return nil
 }

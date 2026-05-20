@@ -34,20 +34,25 @@ var ErrAuthUserRejected = errors.New("auth: identity cannot be resolved to an Ad
 // deserializes ResolvedIdentity directly into the struct. Field-
 // by-field copy with explicit flags.
 //
-// Threat T15 (account takeover): if a username exists, this
-// function returns that row regardless of whether it was originally
-// created via password-login or via federated JIT. v1 has no
-// "linking" of OIDC subjects to AdminUser rows — same-name match is
-// enough. This is the legacy admin's behavior; it matches existing
-// operator expectations and avoids needing a new table. The
-// trade-off is documented in the spec.
+// Threat T15 (account takeover): the IdPSubject field binds a
+// federated identity to a specific AdminUser row. On first login the
+// subject is stamped; on subsequent logins it must match. This
+// prevents a different IdP identity with the same username from
+// hijacking the account.
 func (h *HandlersApi) resolveFederatedUser(identity auth.ResolvedIdentity, jitProvision bool, authSource string) (users.AdminUser, error) {
 	if identity.PreferredUsername == "" {
-		// Defensive — sanitizeUsername in pkg/auth/oidc already
-		// catches empty values, but never trust upstream.
 		return users.AdminUser{}, fmt.Errorf("%w: empty username", ErrAuthUserRejected)
 	}
 	if exists, existing := h.Users.ExistsGet(identity.PreferredUsername); exists {
+		if existing.IdPSubject == "" {
+			existing.IdPSubject = identity.Subject
+			existing.AuthSource = authSource
+			if err := h.Users.Update(existing); err != nil {
+				return users.AdminUser{}, fmt.Errorf("%w: binding IdP subject: %v", ErrAuthUserRejected, err)
+			}
+		} else if existing.IdPSubject != identity.Subject {
+			return users.AdminUser{}, fmt.Errorf("%w: IdP subject mismatch for user %s", ErrAuthUserRejected, identity.PreferredUsername)
+		}
 		return existing, nil
 	}
 	if !jitProvision {
@@ -73,6 +78,7 @@ func (h *HandlersApi) resolveFederatedUser(identity auth.ResolvedIdentity, jitPr
 	// page can display the right badge. Purely informational; the auth
 	// flow itself doesn't gate on this field.
 	u.AuthSource = authSource
+	u.IdPSubject = identity.Subject
 	if err := h.Users.Create(u); err != nil {
 		return users.AdminUser{}, fmt.Errorf("%w: create user: %v", ErrAuthUserRejected, err)
 	}

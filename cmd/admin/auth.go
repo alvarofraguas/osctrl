@@ -76,6 +76,7 @@ func handlerAuthCheck(h http.Handler, auth string) http.Handler {
 						http.Redirect(w, r, forbiddenPath, http.StatusFound)
 						return
 					}
+					u.IdPSubject = samlUser
 					if err := adminUsers.Create(u); err != nil {
 						log.Err(err).Msgf("error creating user %s", samlUser)
 						http.Redirect(w, r, forbiddenPath, http.StatusFound)
@@ -85,6 +86,18 @@ func handlerAuthCheck(h http.Handler, auth string) http.Handler {
 					u, err = adminUsers.Get(samlUser)
 					if err != nil {
 						log.Err(err).Msgf("error getting user %s", samlUser)
+						http.Redirect(w, r, forbiddenPath, http.StatusFound)
+						return
+					}
+					if u.IdPSubject == "" {
+						u.IdPSubject = samlUser
+						if err := adminUsers.Update(u); err != nil {
+							log.Err(err).Msgf("error binding IdP subject for user %s", samlUser)
+							http.Redirect(w, r, forbiddenPath, http.StatusFound)
+							return
+						}
+					} else if u.IdPSubject != samlUser {
+						log.Warn().Msgf("IdP subject mismatch for user %s", samlUser)
 						http.Redirect(w, r, forbiddenPath, http.StatusFound)
 						return
 					}

@@ -207,18 +207,24 @@ func oidcCallbackHandler(w http.ResponseWriter, r *http.Request) {
 // if JITProvision is enabled; reject otherwise. Threat T16, T25.
 func resolveOIDCUser(identity auth.ResolvedIdentity) (users.AdminUser, error) {
 	if exists, existing := adminUsers.ExistsGet(identity.PreferredUsername); exists {
+		if existing.IdPSubject == "" {
+			existing.IdPSubject = identity.Subject
+			if err := adminUsers.Update(existing); err != nil {
+				return users.AdminUser{}, fmt.Errorf("binding IdP subject: %w", err)
+			}
+		} else if existing.IdPSubject != identity.Subject {
+			return users.AdminUser{}, fmt.Errorf("IdP subject mismatch for user %s", identity.PreferredUsername)
+		}
 		return existing, nil
 	}
 	if flagParams == nil || flagParams.OIDC == nil || !flagParams.OIDC.JITProvision {
 		return users.AdminUser{}, fmt.Errorf("user %s not provisioned and JITProvision disabled", identity.PreferredUsername)
 	}
-	// Compose display name from identity. The package-level
-	// sanitizer already vetted PreferredUsername; Name/Email are
-	// not used as identifiers and are stored as-is.
 	u, err := adminUsers.New(identity.PreferredUsername, "", identity.Email, identity.Name, false, false)
 	if err != nil {
 		return users.AdminUser{}, fmt.Errorf("new user: %w", err)
 	}
+	u.IdPSubject = identity.Subject
 	if err := adminUsers.Create(u); err != nil {
 		return users.AdminUser{}, fmt.Errorf("create user: %w", err)
 	}
