@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -12,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -1138,7 +1140,7 @@ func (h *HandlersTLS) EnrollPackageHandler(w http.ResponseWriter, r *http.Reques
 		}
 		fDesc = "Enrolling DEB Package for Linux"
 		fName = genPackageFilename(env.Name, settings.PackageDeb, version.OsqueryVersion, version.OsctrlVersion)
-		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, env.DebPackage)
+		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, filepath.Base(env.DebPackage))
 	case settings.PackageRpm:
 		if strings.HasPrefix(env.RpmPackage, "http") {
 			http.Redirect(w, r, env.RpmPackage, http.StatusFound)
@@ -1146,7 +1148,7 @@ func (h *HandlersTLS) EnrollPackageHandler(w http.ResponseWriter, r *http.Reques
 		}
 		fDesc = "Enrolling RPM Package for Linux"
 		fName = genPackageFilename(env.Name, settings.PackageRpm, version.OsqueryVersion, version.OsctrlVersion)
-		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, env.RpmPackage)
+		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, filepath.Base(env.RpmPackage))
 	case settings.PackagePkg:
 		if strings.HasPrefix(env.PkgPackage, "http") {
 			http.Redirect(w, r, env.PkgPackage, http.StatusFound)
@@ -1154,7 +1156,7 @@ func (h *HandlersTLS) EnrollPackageHandler(w http.ResponseWriter, r *http.Reques
 		}
 		fDesc = "Enrolling PKG Package for Mac"
 		fName = genPackageFilename(env.Name, settings.PackagePkg, version.OsqueryVersion, version.OsctrlVersion)
-		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, env.PkgPackage)
+		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, filepath.Base(env.PkgPackage))
 	case settings.PackageMsi:
 		if strings.HasPrefix(env.MsiPackage, "http") {
 			http.Redirect(w, r, env.MsiPackage, http.StatusFound)
@@ -1162,7 +1164,7 @@ func (h *HandlersTLS) EnrollPackageHandler(w http.ResponseWriter, r *http.Reques
 		}
 		fDesc = "Enrolling MSI Package for Windows"
 		fName = genPackageFilename(env.Name, settings.PackageMsi, defOsqueryVersion, version.OsctrlVersion)
-		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, env.MsiPackage)
+		fPath = fmt.Sprintf("%s/%s/%s", enrollPackagesPath, env.Name, filepath.Base(env.MsiPackage))
 	}
 	// Initiate download
 	fi, err := os.Stat(fPath)
@@ -1205,7 +1207,7 @@ func (h *HandlersTLS) OsqueryConfigEndpointHandler(w http.ResponseWriter, r *htt
 	confirmed := false
 	integrityCheck := false
 	for _, confEndpoint := range *h.ConfigEndpoints {
-		if confEndpoint.Environment == envVar && confEndpoint.Secret == secretVar {
+		if confEndpoint.Environment == envVar && subtle.ConstantTimeCompare([]byte(confEndpoint.Secret), []byte(secretVar)) == 1 {
 			confirmed = true
 			integrityCheck = confEndpoint.IntegrityCheck
 			break
