@@ -2,6 +2,7 @@ package environments
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"strings"
 	"text/template"
@@ -150,10 +151,14 @@ func QuickAddScript(project, script string, environment TLSEnvironment) (string,
 		Project        string
 		OsqueryVersion string
 		Environment    TLSEnvironment
+		FlagsB64       string
+		CertificateB64 string
 	}{
 		Project:        project,
 		OsqueryVersion: version.OsqueryVersion,
 		Environment:    environment,
+		FlagsB64:       base64.StdEncoding.EncodeToString([]byte(environment.Flags)),
+		CertificateB64: base64.StdEncoding.EncodeToString([]byte(environment.Certificate)),
 	}
 	// Compile template into buffer
 	var tpl bytes.Buffer

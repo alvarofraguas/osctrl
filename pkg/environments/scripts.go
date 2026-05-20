@@ -177,17 +177,13 @@ prepareSecret() {
 
 prepareFlags() {
   log "Preparing osquery flags in $_FLAGS"
-  sudo sh -c "cat <<EOF | sed -e 's@__SECRET_FILE__@$_SECRET_FILE@g' | sed 's@__CERT_FILE__@$_CERT@g' > $_FLAGS
-{{ .Environment.Flags }}
-EOF"
+  echo '{{ .FlagsB64 }}' | base64 -d | sed -e "s@__SECRET_FILE__@$_SECRET_FILE@g" | sed "s@__CERT_FILE__@$_CERT@g" | sudo tee "$_FLAGS" > /dev/null
 }
 
 prepareCert() {
   log "Preparing osquery certificate in $_CERT"
   sudo mkdir -p $(dirname "$_CERT")
-  sudo sh -c "cat <<EOF > $_CERT
-{{ .Environment.Certificate }}
-EOF"
+  echo '{{ .CertificateB64 }}' | base64 -d | sudo tee "$_CERT" > /dev/null
 }
 
 startOsquery() {
@@ -269,14 +265,10 @@ $osqueryTempMSI = "C:\Windows\Temp\osquery-{{ .OsqueryVersion }}.msi"
 #$osqueryMSISize = 9953280
 $serviceName = "osqueryd"
 $serviceDescription = "osquery daemon service"
-$osqueryFlags = @"
-{{ .Environment.Flags }}
-"@
+$osqueryFlags = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{ .FlagsB64 }}'))
 $osqueryFlags = $osqueryFlags -replace "__SECRET_FILE__", $secretFile
 $osqueryFlags = $osqueryFlags -replace "__CERT_FILE__", $certFile
-$osqueryCertificate = @"
-{{ .Environment.Certificate }}
-"@
+$osqueryCertificate = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{ .CertificateB64 }}'))
 
 # Adapted from http://www.jonathanmedd.net/2014/01/testing-for-admin-privileges-in-powershell.html
 function Test-IsAdmin {
